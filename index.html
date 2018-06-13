@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title> Lessons Learned Writing Go </title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+  </head>
+  <body>
+     <textarea id="source">
+
+# Go
+
+![gopher](img/gopher.png)
+
+---
+
+# I like tools
+
+ * I really like tools
+ * I have 116 executable files in my dotfiles bin directory
+ * I prefer portable, relatively universal tools
+
+![leatherman](img/leatherman.jpg)
+
+
+---
+
+# Non-gross Go tools
+
+ * Go binaries are huge; hello world is *two megabytes*
+
+---
+
+# Non-gross Go tools (cont.)
+
+ * Go binaries are huge; hello world is *two megabytes*
+ * Suggestion by Hopkins: have a multibinary a-la busybox of go tools
+
+---
+
+# Non-gross Go tools (cont.)
+
+ * Go binaries are huge; hello world is *two megabytes*
+ * Suggestion by Hopkins: have a multibinary a-la busybox of go tools
+ * [Trivial installation: wget + explode](https://github.com/frioux/dotfiles/blob/3e5553bdc63b28b5f1c44fbbd63bc817a1f3ef84/install.sh#L131-L142)
+
+``` bash
+if test ! -e ~/bin/leatherman || older-than ~/bin/leatherman c 7d; then
+   (
+      LMURL="$(curl -s https://api.github.com/repos/frioux/leatherman/releases/latest |
+         grep browser_download_url |
+         cut -d '"' -f 4)"
+      mkdir -p ~/bin
+      curl -sL "$LMURL" > ~/bin/leatherman.xz
+      xz -d -f ~/bin/leatherman.xz
+      chmod +x ~/bin/leatherman
+      ~/bin/leatherman explode
+   ) &
+fi
+
+```
+
+---
+
+# Non-gross Go tools (cont.)
+
+ * Travis to autobuild
+
+``` make
+leatherman: *.go
+	go get -t ./...
+	go test
+	go build
+	strip leatherman
+	xz leatherman
+```
+
+``` yaml
+language: go
+
+go:
+  - 1.10.x
+deploy:
+  provider: releases
+  api_key:
+    secure: ...
+  file: leatherman.xz
+  skip_cleanup: true
+  on:
+    repo: frioux/leatherman
+
+```
+
+
+---
+# When to use Go
+
+ * When deps are not "core", to amortize deps to "free"
+ * Concurrency/Parallelism
+
+---
+
+# Categorized Listing: External Deps
+
+ * addrs
+ * addrspec-to-tabs
+ * clocks
+ * csv2json
+ * ec2-resource-for-ip
+ * expand-url
+ * export-bamboohr
+ * export-bamboohr-tree
+ * gen-pass
+ * group-by-date
+ * netrc-password
+ * render-mail
+ * yaml2json
+
+---
+
+# Categorized Listing: Concurrency
+
+ * debounce
+ * ec2-resource-for-ip
+ * pomotimer
+
+---
+
+# Runtime != Unix Process Model
+
+(pomotimer)
+
+---
+
+# The Cost of Performance
+
+ * `export-bamboohr`: Go forces you to think about certain limitations, like
+     maximum line length
+
+---
+
+ # Testing in Go is great
+
+``` go
+
+func TestFilebeatLogfileGlobs(t *testing.T) {
+	r := strings.NewReader(yamlStr)
+
+	got := filebeatLogfileGlobs(r)
+
+	assert.Equal(t, ..., got, "globs")
+}
+```
+
+---
+
+# Excellent Standard Library
+
+ * `net/mail`'s `ParseAddress`
+ * `time`
+ * `encoding/json`, `encoding/csv`
+
+---
+
+# Excellent Experimental Libraries
+
+ * See [golang.org/x](http://golang.org/x)
+ * `golang.org/x/crypto/bcrypt`
+ * `golang.org/x/crypto/ssh`
+
+---
+
+# Not So Excellent Ecosystem
+
+ * Had to fork a netrc package
+ * Also had to fork *yaml*
+ * [Had to implement `mozcookiejar`](https://blog.afoolishmanifesto.com/posts/announcing-mozcookiejar-golang/)
+ * WWW::Mechanize replacement (surf) not super quality
+ * Oddly many implementations of db drivers
+
+
+---
+
+# Concurrency!
+
+ * `debounce`
+ * `ec2-resource-for-ip`
+ * `pomotimer`
+
+---
+
+# ~fin~
+
+     </textarea>
+    <script src="./remark.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
